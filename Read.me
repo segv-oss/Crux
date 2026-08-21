@@ -1,0 +1,83 @@
+<div align="center">
+
+# ⚡ Crux
+
+**Stop context-switching. Start shipping.**  
+A unified, real-time collaboration hub bridging GitHub PRs, issue tracking, and team discussions into a single cockpit.
+
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4+-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+
+[**Live Demo / Sandbox**](https://your-deployment-url.vercel.app) • [**Architecture**](#-architecture) • [**Getting Started**](#-getting-started) • [**Features**](#-core-features)
+
+</div>
+
+---
+
+## 💥 The Problem
+
+Modern software teams spend nearly **30% of their day context-switching** between disjointed tools:
+* Code diffs live on **GitHub**.
+* Requirements and specs live in **Linear/Jira**.
+* Clarifications and reviewer debates vanish into ephemeral **Slack/Discord threads**.
+
+This friction leads to stale pull requests, outdated tickets, missed breaking changes, and delayed deployment cycles.
+
+---
+
+## ⚡ The Solution: Crux
+
+Crux collapses the fragmented review and triage loop into a high-density, real-time command center:
++-----------------------------------------------------------------------------------+
+|                                  CRUX COCKPIT                                     |
++----------------------+----------------------------+-------------------------------+
+|  1. METADATA & TASKS |   2. LIVE DIFF & CODE      |     3. REAL-TIME THREADS      |
+|                      |                            |                               |
+|  • Linked Issues     |  • Real-time Diff Viewer   |  • Multiplayer Live Presence  |
+|  • CI/CD Health      |  • AI Reviewer Brief       |  • Markdown & Code Blocks     |
+|  • Assignees/Status  |  • Breaking Schema Alerts  |  • One-click Sync to PR       |
++----------------------+----------------------------+-------------------------------+
+
+## 🚀 Core Features
+
+### 1. 🖥️ Unified 3-Column Cockpit
+* **Left Column (Context):** View active issue specs, Linear/GitHub metadata, commit histories, and deployment statuses at a glance.
+* **Center Column (Code & AI Briefs):** Clean, syntax-highlighted PR diffs augmented with automated impact summaries.
+* **Right Column (Multiplayer Discussion):** Low-latency, multi-user real-time chat with presence awareness—never lose code review context in general Slack channels again.
+
+### 2. 🧠 AI Reviewer Briefs
+* **Critical Path Extraction:** Highlights which modules carry production risk before you read line-by-line.
+* **Schema Drift Alerts:** Automatically detects database migrations, breaking API contracts, and mutated interfaces.
+* **Test Coverage Gap Analysis:** Pinpoints un-tested edge cases introduced in the branch.
+
+### 3. 🧪 Zero-Friction Sandbox Mode
+* Instant, one-click guest access preloaded with realistic sample repos and live mocks.
+* Enables hackathon judges and prospective teams to experience multiplayer live synchronization without configuring GitHub OAuth tokens upfront.
+
+---
+
+## 🛠️ Tech Stack
+
+* **Frontend:** React, TypeScript, Tailwind CSS, Lucide Icons
+* **Real-time Engine:** WebSockets / Supabase Realtime / Liveblocks
+* **Syntax & Diffs:** Monaco Editor / PrismJS / Diff2Html
+* **AI Analysis:** LLM pipeline structured for AST-aware diff summarization
+* **Deployment:** Vercel
+
+---
+
+## 🏁 Getting Started
+
+### Prerequisites
+
+* Node.js `>= 18.x`
+* `pnpm` (or `npm` / `yarn`)
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/your-username/crux.git](https://github.com/your-username/crux.git)
+   cd crux
