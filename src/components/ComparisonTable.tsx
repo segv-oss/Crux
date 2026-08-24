@@ -1,7 +1,5 @@
-"use client";
-
 import React from "react";
-import { Check, X, Minus } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 export function ComparisonTable() {
   const comparisonRows = [
@@ -47,7 +45,6 @@ export function ComparisonTable() {
     <section id="comparison" className="relative py-24 bg-[#0a0b0e] border-y border-white/[0.06] z-10">
       <div className="max-w-6xl mx-auto px-6">
         
-        {/* Section Title */}
         <div className="max-w-3xl mb-16 text-center mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-mono text-[#a5adbb] mb-4">
             <span>Workflow Matrix</span>
@@ -60,7 +57,6 @@ export function ComparisonTable() {
           </p>
         </div>
 
-        {/* Table Container */}
         <div className="rounded-2xl border border-white/[0.1] bg-[#12141a] overflow-hidden shadow-2xl">
           <div className="grid grid-cols-12 p-4 sm:p-5 border-b border-white/[0.08] bg-[#15181f] text-xs font-mono text-[#a0a8b6] items-center">
             <div className="col-span-6 font-semibold text-[#f0f2f5]">CAPABILITY & METRICS</div>

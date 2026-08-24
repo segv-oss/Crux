@@ -1,8 +1,6 @@
-"use client";
-
 import React, { useState } from "react";
-import Link from "next/link";
-import { ArrowRight, Terminal, Check, Copy, Sparkles, Shield, Github } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Check, Copy, Sparkles, Shield } from "lucide-react";
 
 export function CTABox() {
   const [copied, setCopied] = useState(false);
@@ -18,8 +16,6 @@ export function CTABox() {
       <div className="max-w-5xl mx-auto px-6">
         
         <div className="relative rounded-3xl bg-gradient-to-b from-[#161922] via-[#12141a] to-[#0d0e12] border border-white/[0.12] p-8 sm:p-12 md:p-16 text-center shadow-[0_25px_80px_rgba(0,0,0,0.8)] overflow-hidden">
-          
-          {/* Subtle top spotlight */}
           <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-48 rounded-full bg-white/[0.06] blur-3xl pointer-events-none" />
 
           <div className="relative z-10 max-w-2xl mx-auto">
@@ -39,7 +35,7 @@ export function CTABox() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
               <Link
-                href="/cockpit"
+                to="/cockpit"
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-[#e6eaf0] hover:bg-white text-[#0c0d10] font-semibold text-sm transition-all duration-200 shadow-[0_0_30px_rgba(255,255,255,0.18)] active:scale-95"
               >
                 <span>Launch Dedicated Cockpit</span>

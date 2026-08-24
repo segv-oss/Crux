@@ -1,16 +1,11 @@
-"use client";
-
 import React from "react";
 import {
   Sparkles,
   Zap,
-  Terminal,
   Cpu,
   Layers,
   ShieldCheck,
   GitMerge,
-  Eye,
-  Workflow,
   ArrowRight,
 } from "lucide-react";
 

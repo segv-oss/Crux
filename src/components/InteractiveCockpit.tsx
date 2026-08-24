@@ -1,29 +1,14 @@
-"use client";
-
 import React, { useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import {
   GitPullRequest,
   GitBranch,
-  Play,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  MessageSquare,
   FileCode,
   Sparkles,
-  ShieldCheck,
   Zap,
-  ExternalLink,
-  ChevronRight,
-  Send,
-  Terminal,
-  X,
-  Layers,
-  Cpu,
-  CornerDownLeft,
   ArrowRight,
   Maximize2,
+  Layers,
 } from "lucide-react";
 
 interface PRItem {
@@ -50,7 +35,6 @@ interface PRItem {
     criticalPaths: string[];
   };
   tasks: { id: string; title: string; done: boolean; priority: "p0" | "p1" | "p2" }[];
-  slackMessages: { user: string; time: string; text: string }[];
   diffFiles: {
     name: string;
     status: "modified" | "added";
@@ -87,18 +71,6 @@ const MOCK_PRS: PRItem[] = [
       { id: "CRX-410", title: "Implement Redlock distributed mutex algorithm", done: true, priority: "p0" },
       { id: "CRX-411", title: "Add TTL extension heartbeat ticker", done: true, priority: "p1" },
       { id: "CRX-412", title: "Verify cluster partitioned network split scenario", done: false, priority: "p1" },
-    ],
-    slackMessages: [
-      {
-        user: "sarah.chen",
-        time: "10:42 AM",
-        text: "Just added the failover tests for the distributed mutex. Can @alex inspect the acquire timeout?",
-      },
-      {
-        user: "alex.morris",
-        time: "10:48 AM",
-        text: "Looking now. The drift calculation in Redlock looks solid. Good coverage.",
-      },
     ],
     diffFiles: [
       {
@@ -158,13 +130,6 @@ const MOCK_PRS: PRItem[] = [
       { id: "CRX-388", title: "Compile Tree-sitter core to wasm32-wasi target", done: true, priority: "p0" },
       { id: "CRX-389", title: "Benchmark SIMD throughput on 50k+ LOC diffs", done: true, priority: "p1" },
     ],
-    slackMessages: [
-      {
-        user: "elena.rostova",
-        time: "9:15 AM",
-        text: "WASM memory bridge passed all stress tests on 100k line diffs without memory leaks.",
-      },
-    ],
     diffFiles: [
       {
         name: "packages/parser-wasm/src/bridge.rs",
@@ -222,7 +187,7 @@ export function InteractiveCockpit() {
           </div>
 
           <Link
-            href="/cockpit"
+            to="/cockpit"
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#e6eaf0] hover:bg-white text-[#0c0d10] text-xs font-semibold shadow-[0_0_25px_rgba(255,255,255,0.18)] transition-all shrink-0 w-fit active:scale-95"
           >
             <Maximize2 className="w-3.5 h-3.5" />
@@ -251,7 +216,7 @@ export function InteractiveCockpit() {
                 <span>Socket Synced</span>
               </div>
               <Link
-                href="/cockpit"
+                to="/cockpit"
                 className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/[0.08] hover:bg-white/[0.14] text-[#f0f2f5] text-xs font-medium transition-all"
               >
                 <span>Launch Full App</span>
@@ -263,7 +228,7 @@ export function InteractiveCockpit() {
           {/* 3-Column Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[520px] text-xs">
             
-            {/* Left Column: PR List (Col Span 3) */}
+            {/* Left Column */}
             <div className="lg:col-span-3 border-r border-white/[0.08] bg-[#0e1014] flex flex-col">
               <div className="p-3.5 border-b border-white/[0.06] flex items-center justify-between">
                 <span className="font-semibold text-[#f0f2f5] flex items-center gap-2">
@@ -328,9 +293,8 @@ export function InteractiveCockpit() {
               </div>
             </div>
 
-            {/* Center Column: Diff & Code Context (Col Span 6) */}
+            {/* Center Column */}
             <div className="lg:col-span-6 bg-[#0c0d10] flex flex-col border-r border-white/[0.08]">
-              
               <div className="p-3.5 border-b border-white/[0.08] bg-[#12141a]">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="font-semibold text-sm text-[#f0f2f5]">
@@ -347,7 +311,6 @@ export function InteractiveCockpit() {
                 </div>
               </div>
 
-              {/* Diff Content Viewer */}
               <div className="flex-1 overflow-y-auto p-2 font-mono text-[11px] leading-relaxed bg-[#0c0d10]">
                 <div className="text-[10px] text-[#6a7382] px-3 py-1 font-mono">
                   Showing diff for: <span className="text-[#a5adbb]">{activeFile.name}</span>
@@ -409,9 +372,8 @@ export function InteractiveCockpit() {
               </div>
             </div>
 
-            {/* Right Column: AI Brief & Tasks (Col Span 3) */}
+            {/* Right Column */}
             <div className="lg:col-span-3 bg-[#0e1014] flex flex-col divide-y divide-white/[0.06] overflow-y-auto">
-              
               <div className="p-3.5">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5 font-semibold text-[#f0f2f5]">
@@ -459,7 +421,6 @@ export function InteractiveCockpit() {
                 </div>
               </div>
 
-              {/* Linked Tasks */}
               <div className="p-3.5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold text-[#f0f2f5] flex items-center gap-1.5">

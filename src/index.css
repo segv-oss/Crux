@@ -17,16 +17,15 @@
   }
 
   body {
-    background-color: var(--bg-base);
-    color: var(--text-primary);
+    background-color: #0c0d10;
+    color: #f0f2f5;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     overflow-x: hidden;
-    selection-background-color: #2b303c;
-    selection-color: #ffffff;
+    margin: 0;
+    padding: 0;
   }
 }
 
-/* Custom noise & micro-textures */
 .bg-grid-pattern {
   background-size: 32px 32px;
   background-image: 
@@ -36,36 +35,6 @@
 
 .bg-radial-gradient {
   background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
-}
-
-.glass-panel {
-  background: rgba(18, 20, 26, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.glass-panel-elevated {
-  background: rgba(24, 27, 34, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.silver-shimmer {
-  background: linear-gradient(
-    110deg,
-    rgba(255, 255, 255, 0.02) 0%,
-    rgba(255, 255, 255, 0.12) 45%,
-    rgba(255, 255, 255, 0.02) 90%
-  );
-  background-size: 200% 100%;
-}
-
-.mono-badge {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  color: #c4cbd4;
 }
 
 /* Scrollbar */

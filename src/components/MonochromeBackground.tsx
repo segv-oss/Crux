@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useRef } from "react";
 import anime from "animejs";
 
@@ -10,7 +8,6 @@ export function MonochromeBackground() {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Subtle floating particles using Anime.js
     const particles = containerRef.current.querySelectorAll(".anime-node");
     
     anime({
@@ -45,19 +42,13 @@ export function MonochromeBackground() {
       className="fixed inset-0 pointer-events-none overflow-hidden z-0"
       aria-hidden="true"
     >
-      {/* Subtle top spotlight glow */}
       <div
         ref={glowRef}
         className="absolute -top-[250px] left-1/2 -translate-x-1/2 w-[900px] h-[550px] rounded-full bg-radial-gradient blur-[90px] opacity-40"
       />
-
-      {/* Grid texture */}
       <div className="absolute inset-0 bg-grid-pattern opacity-60" />
-
-      {/* Vignette mask */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,#0c0d10_75%)]" />
 
-      {/* Anime.js animated subtle node cluster */}
       {Array.from({ length: 28 }).map((_, i) => {
         const top = `${(i * 37) % 95}%`;
         const left = `${(i * 43) % 98}%`;

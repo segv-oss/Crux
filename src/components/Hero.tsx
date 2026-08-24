@@ -1,7 +1,5 @@
-"use client";
-
 import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import {
   ArrowRight,
   Terminal,
@@ -25,7 +23,6 @@ export function Hero() {
   const orbitalModelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // 1. Staggered text entry on left
     if (heroLeftRef.current) {
       anime({
         targets: heroLeftRef.current.querySelectorAll(".hero-left-anim"),
@@ -37,9 +34,7 @@ export function Hero() {
       });
     }
 
-    // 2. Hardware-accelerated continuous orbital animation on right
     if (orbitalModelRef.current) {
-      // Rotate outer orbital ring
       anime({
         targets: orbitalModelRef.current.querySelector(".orbital-ring-outer"),
         rotate: 360,
@@ -48,7 +43,6 @@ export function Hero() {
         loop: true,
       });
 
-      // Rotate inner orbital ring counter-clockwise
       anime({
         targets: orbitalModelRef.current.querySelector(".orbital-ring-inner"),
         rotate: -360,
@@ -57,7 +51,6 @@ export function Hero() {
         loop: true,
       });
 
-      // Ambient gentle floating of satellite nodes
       anime({
         targets: orbitalModelRef.current.querySelectorAll(".satellite-card"),
         translateY: [
@@ -69,7 +62,6 @@ export function Hero() {
         delay: anime.stagger(400),
       });
 
-      // Core pulse
       anime({
         targets: orbitalModelRef.current.querySelector(".core-pulse-emitter"),
         scale: [1, 1.45],
@@ -91,12 +83,10 @@ export function Hero() {
     <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden z-10">
       <div className="max-w-7xl mx-auto px-6">
         
-        {/* Split Grid: Left Text & Content (55%), Right Interactive Engine Model (45%) */}
+        {/* Split Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
-          {/* ═══════════════════════════════════════════════════
-              LEFT COLUMN: HERO HEADLINE, VALUE & ACTIONS (7 Cols)
-              ═══════════════════════════════════════════════════ */}
+          {/* LEFT COLUMN: HERO HEADLINE, VALUE & ACTIONS */}
           <div ref={heroLeftRef} className="lg:col-span-7 text-left space-y-6">
             
             {/* Status Pill */}
@@ -129,7 +119,7 @@ export function Hero() {
             {/* Action Buttons & Terminal Snippet */}
             <div className="hero-left-anim flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
               <Link
-                href="/cockpit"
+                to="/cockpit"
                 className="flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-[#e6eaf0] hover:bg-white text-[#0c0d10] font-semibold text-sm transition-all duration-200 shadow-[0_0_25px_rgba(255,255,255,0.18)] hover:shadow-[0_0_35px_rgba(255,255,255,0.28)] active:scale-[0.98]"
               >
                 <span>Open Dedicated Cockpit</span>
@@ -178,27 +168,21 @@ export function Hero() {
 
           </div>
 
-          {/* ═══════════════════════════════════════════════════
-              RIGHT COLUMN: REAL-TIME CONVERGENCE ENGINE MODEL (5 Cols)
-              ═══════════════════════════════════════════════════ */}
+          {/* RIGHT COLUMN: REAL-TIME CONVERGENCE ENGINE MODEL */}
           <div className="lg:col-span-5 flex justify-center items-center">
             <div
               ref={orbitalModelRef}
               className="relative w-full max-w-[460px] h-[460px] flex items-center justify-center select-none"
             >
-              {/* Outer Subtle Orbital Ring */}
               <div className="orbital-ring-outer absolute w-[420px] h-[420px] rounded-full border border-dashed border-white/[0.07] pointer-events-none" />
 
-              {/* Inner Orbital Ring with Accent Nodes */}
               <div className="orbital-ring-inner absolute w-[300px] h-[300px] rounded-full border border-white/[0.08] pointer-events-none flex items-center justify-between">
                 <span className="w-2 h-2 rounded-full bg-[#d0d6e0]/60 -ml-1 shadow-[0_0_8px_#ffffff]" />
                 <span className="w-1.5 h-1.5 rounded-full bg-[#7a8494] -mr-0.5" />
               </div>
 
-              {/* Central Core Pulse Wave */}
               <div className="core-pulse-emitter absolute w-24 h-24 rounded-full bg-white/[0.08] pointer-events-none" />
               
-              {/* Center Crux Core Hub */}
               <div className="relative z-20 w-24 h-24 rounded-2xl bg-gradient-to-b from-[#1c202a] via-[#14171f] to-[#0e1015] border border-white/[0.2] shadow-[0_0_50px_rgba(255,255,255,0.1)] flex flex-col items-center justify-center group hover:scale-105 transition-transform duration-300">
                 <img
                   src="/crux-logo.png"
@@ -210,7 +194,7 @@ export function Hero() {
                 </span>
               </div>
 
-              {/* ── SATELLITE NODE 1: GitHub PR Webhook Stream (Top Left) ── */}
+              {/* SATELLITE NODE 1 */}
               <div className="satellite-card absolute -top-2 left-0 z-20 w-52 p-3 rounded-xl bg-[#14171e]/90 border border-white/[0.12] shadow-xl backdrop-blur-md hover:border-white/30 transition-colors">
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#f0f2f5]">
@@ -230,7 +214,7 @@ export function Hero() {
                 </div>
               </div>
 
-              {/* ── SATELLITE NODE 2: AI Code Brief Stream (Top Right) ── */}
+              {/* SATELLITE NODE 2 */}
               <div className="satellite-card absolute top-12 -right-4 z-20 w-52 p-3 rounded-xl bg-[#14171e]/90 border border-white/[0.12] shadow-xl backdrop-blur-md hover:border-white/30 transition-colors">
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#f0f2f5]">
@@ -249,7 +233,7 @@ export function Hero() {
                 </div>
               </div>
 
-              {/* ── SATELLITE NODE 3: Linear & Slack Event Bus (Bottom Center) ── */}
+              {/* SATELLITE NODE 3 */}
               <div className="satellite-card absolute -bottom-3 left-10 z-20 w-60 p-3 rounded-xl bg-[#14171e]/90 border border-white/[0.12] shadow-xl backdrop-blur-md hover:border-white/30 transition-colors">
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#f0f2f5]">
@@ -267,7 +251,7 @@ export function Hero() {
                 </div>
               </div>
 
-              {/* Floating ambient telemetry badge (Bottom Right) */}
+              {/* Telemetry badge */}
               <div className="absolute bottom-20 -right-2 z-10 p-2 rounded-lg bg-[#0e1015]/80 border border-white/[0.07] font-mono text-[9px] text-[#697280] space-y-0.5">
                 <div className="flex items-center gap-1">
                   <span className="w-1 h-1 rounded-full bg-emerald-400" />

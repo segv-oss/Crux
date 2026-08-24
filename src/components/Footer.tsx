@@ -1,8 +1,6 @@
-"use client";
-
 import React from "react";
-import Link from "next/link";
-import { Github, Terminal, Shield, ArrowUpRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Github, ArrowUpRight } from "lucide-react";
 
 export function Footer() {
   return (
@@ -12,7 +10,7 @@ export function Footer() {
           
           {/* Brand Column */}
           <div className="col-span-2">
-            <Link href="/" className="flex items-center gap-2.5 mb-4 group">
+            <Link to="/" className="flex items-center gap-2.5 mb-4 group">
               <img
                 src="/crux-logo.png"
                 alt="Crux Logo"
@@ -42,7 +40,7 @@ export function Footer() {
             <div className="font-semibold text-[#f0f2f5] mb-3 font-sans">Product</div>
             <ul className="space-y-2">
               <li>
-                <Link href="/cockpit" className="hover:text-[#f0f2f5] transition-colors">
+                <Link to="/cockpit" className="hover:text-[#f0f2f5] transition-colors">
                   Full Cockpit
                 </Link>
               </li>

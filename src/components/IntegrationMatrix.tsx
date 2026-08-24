@@ -1,7 +1,5 @@
-"use client";
-
 import React from "react";
-import { Github, MessageSquare, Layers, Cpu, Database, Shield, Zap } from "lucide-react";
+import { Github, MessageSquare, Layers, Cpu, Database, Zap } from "lucide-react";
 
 export function IntegrationMatrix() {
   const integrations = [
@@ -53,7 +51,6 @@ export function IntegrationMatrix() {
     <section id="integrations" className="relative py-24 z-10">
       <div className="max-w-7xl mx-auto px-6">
         
-        {/* Section Header */}
         <div className="max-w-3xl mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-mono text-[#a5adbb] mb-4">
             <span>Ecosystem</span>
@@ -66,7 +63,6 @@ export function IntegrationMatrix() {
           </p>
         </div>
 
-        {/* Integration Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {integrations.map((item, idx) => {
             const IconComponent = item.icon;
