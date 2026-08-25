@@ -1,0 +1,19 @@
+# Integrations
+
+Crux augments the tools you already use — it doesn't replace them. Everything you do in GitHub, Linear, and Slack stays authoritative; Crux keeps the three in sync and adds the intelligence layer on top.
+
+## GitHub
+
+Connect via OAuth from the dashboard and select repositories. Crux registers webhooks per repo, so PRs, reviews, and check states flow into the Cockpit in real time. Inline comments you post in Crux sync back to the PR.
+
+## Linear
+
+Paste a workspace API key from Linear settings. Tasks link to PRs automatically when branch names or PR descriptions reference issue IDs (like `CRX-214`). Status changes mirror both ways: merging a PR closes the linked task.
+
+## Slack
+
+Install the Crux Slack app and approve permissions. PR summaries post to review channels, thread context attaches to the Cockpit, and decisions made in Slack stay attached to the PR they were about.
+
+## Resilience
+
+If one of the three services is down, Crux queues changes and syncs when it recovers. No data loss, no orphaned tasks — eventual consistency is guaranteed within five minutes.

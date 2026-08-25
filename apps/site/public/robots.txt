@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://crux.segv.tech/sitemap.xml

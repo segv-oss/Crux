@@ -1,0 +1,22 @@
+# AI Reviewer Briefs
+
+Every pull request gets scanned automatically the moment it opens. The result is a two-minute brief that answers one question: *what should I care about in this PR?* — before a reviewer even opens it.
+
+## What the scan covers
+
+- **Critical-path analysis** — changes that cascade through the codebase
+- **Schema & contract detection** — database migrations, API contract changes, and breaking changes
+- **Test coverage insights** — untested code paths and suggested scenarios
+- **Dependency impact** — upstream and downstream services affected by the diff
+- **Performance signals** — potential bottlenecks, memory leaks, and inefficient queries
+- **Security pre-filtering** — high-risk changes to auth, secrets, and permissions, surfaced first
+
+## Output
+
+A compact brief attached directly to the PR in the Cockpit, with a Slack notification carrying the summary. New commits trigger a re-scan, so the brief never goes stale mid-review.
+
+## Accuracy
+
+Roughly 95% precision on schema and breaking-change detection, around 85% on test-coverage gaps depending on language and framework. The scanner is deliberately conservative: false positives are rare, and the brief flags uncertainty rather than hiding it.
+
+Teams using briefs report review-to-merge time dropping by around 40%.

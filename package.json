@@ -1,30 +1,21 @@
 {
-  "name": "crux-platform",
+  "name": "crux",
   "private": true,
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.23.0",
+  "engines": {
+    "node": ">=20"
   },
-  "dependencies": {
-    "animejs": "^3.2.2",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.475.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0",
-    "tailwind-merge": "^3.0.1"
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:site": "turbo run dev --filter=@crux/site",
+    "build": "turbo run build",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.0.7",
-    "@types/animejs": "^3.1.12",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
-    "@vitejs/plugin-react": "^4.3.4",
-    "tailwindcss": "^4.0.7",
-    "typescript": "^5.7.3",
-    "vite": "^6.1.0"
+    "@biomejs/biome": "1.9.4",
+    "turbo": "^2.4.4"
   }
 }

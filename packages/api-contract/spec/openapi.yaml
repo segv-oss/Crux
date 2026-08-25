@@ -1,0 +1,9 @@
+openapi: 3.1.0
+info:
+  title: Crux API
+  version: 0.1.0
+  description: |
+    Placeholder contract. Real paths and schemas arrive with the API contract.
+    This file exists so tooling can be wired before the contract lands.
+paths: {}
+components: {}

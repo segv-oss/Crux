@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crux — Unified Developer Collaboration</title>
+    <meta
+      name="description"
+      content="Crux unifies GitHub pull requests, Linear tasks, and Slack discussions into one real-time cockpit. End context-switching. Start shipping faster."
+    />
+    <meta name="theme-color" content="#0a0a0b" />
+    <link rel="canonical" href="https://crux.segv.tech/" />
+    <meta property="og:url" content="https://crux.segv.tech/" />
+    <meta property="og:image" content="https://crux.segv.tech/crux-logo.png" />
+    <script>
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('anim');
+      }
+    </script>
+    <link
+      rel="preload"
+      href="/fonts/space-grotesk-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/jetbrains-mono-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="icon" type="image/png" href="/crux-logo.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Crux — Unified Developer Collaboration" />
+    <meta
+      property="og:description"
+      content="Pull requests, tasks, and team discussions in one real-time cockpit. Built open source."
+    />
+    <meta property="og:image" content="https://crux.segv.tech/crux-logo.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

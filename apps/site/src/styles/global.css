@@ -1,0 +1,258 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Space Grotesk Variable";
+  src: url("/fonts/space-grotesk-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "JetBrains Mono Variable";
+  src: url("/fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@theme {
+  --font-sans: "Space Grotesk Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --color-bg: #0a0a0b;
+  --color-surface: #101013;
+  --color-surface-2: #16161a;
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-line-strong: rgba(255, 255, 255, 0.16);
+  --color-ink: #f4f4f5;
+  --color-ink-muted: #a1a1aa;
+  --color-ink-faint: #8b8b94;
+  --color-accent: #ff5a24;
+  --color-accent-soft: rgba(255, 90, 36, 0.14);
+  --color-ok: #3ecf8e;
+  --color-warn: #e2b93b;
+  --color-err: #f0554d;
+
+  --radius-card: 16px;
+  --radius-win: 12px;
+  --radius-btn: 10px;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@utility container-x {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 76rem;
+  padding-inline: 1.5rem;
+}
+
+@utility mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+.bg-grid {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.bg-fade {
+  background: radial-gradient(ellipse 75% 65% at 62% 42%, transparent 25%, var(--color-bg) 78%);
+}
+
+.anim [data-h],
+.anim [data-mark-img] {
+  opacity: 0;
+}
+
+@keyframes crux-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.orbit {
+  animation: crux-orbit 48s linear infinite;
+}
+
+.docs-prose h1 {
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.docs-prose h2 {
+  margin-top: 2.75rem;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.docs-prose h3 {
+  margin-top: 2rem;
+  font-size: 1.05rem;
+}
+
+.docs-prose p {
+  margin-top: 1rem;
+  line-height: 1.75;
+  color: var(--color-ink-muted);
+}
+
+.docs-prose ul,
+.docs-prose ol {
+  margin-top: 1rem;
+  padding-left: 1.25rem;
+  line-height: 1.75;
+  color: var(--color-ink-muted);
+}
+
+.docs-prose ul {
+  list-style: disc;
+}
+
+.docs-prose ol {
+  list-style: decimal;
+}
+
+.docs-prose li + li {
+  margin-top: 0.4rem;
+}
+
+.docs-prose li::marker {
+  color: var(--color-ink-faint);
+}
+
+.docs-prose strong {
+  color: var(--color-ink);
+}
+
+.docs-prose a {
+  color: var(--color-accent);
+}
+
+.docs-prose a:hover {
+  text-decoration: underline;
+}
+
+.docs-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+}
+
+.docs-prose pre {
+  margin-top: 1.25rem;
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  line-height: 1.7;
+}
+
+.docs-prose pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted);
+}
+
+@keyframes crux-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+@keyframes crux-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes crux-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.caret::after {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 0.15em;
+  background: var(--color-accent);
+  vertical-align: text-bottom;
+  animation: crux-caret 1s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret::after {
+    animation: none;
+  }
+}

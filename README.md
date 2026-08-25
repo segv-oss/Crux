@@ -155,31 +155,15 @@ One-click guest access for reviewers to *test* PRs live—with pre-loaded sample
 
 ### Installation
 
-#### Option 1: Cloud Deployment (Recommended)
+#### Hosted Frontend
 
-```bash
-# Navigate to Crux cloud dashboard
-# https://app.cruxdev.io
+The marketing site and documentation are deployed on Cloudflare Pages and deploy automatically on every commit to `main`.
 
-# Connect your GitHub org
-# → Authorize OAuth
-# → Select repositories
-
-# Connect your Linear workspace
-# → Paste API key from Linear settings
-
-# Connect Slack
-# → Install Crux Slack app
-# → Authorize permissions
-
-# You're live. PRs now route through Crux automatically.
-```
-
-#### Option 2: Self-Hosted
+#### Self-Hosted
 
 ```bash
 # Clone the repository
-git clone https://github.com/cruxdev/crux.git
+git clone https://github.com/segv-oss/crux.git
 cd crux
 
 # Install dependencies
@@ -346,21 +330,25 @@ NODE_ENV=development
 ## Documentation
 
 ### Core Guides
-- [Getting Started](./docs/getting-started.md)
-- [Cockpit Usage Guide](./docs/cockpit.md)
-- [AI Reviewer Briefs Explained](./docs/ai-briefs.md)
-- [Sandbox Setup & Testing](./docs/sandbox.md)
-- [API Reference](./docs/api.md)
+- [Getting Started](https://crux.segv.tech/docs/getting-started)
+- [Cockpit Usage Guide](https://crux.segv.tech/docs/cockpit)
+- [AI Reviewer Briefs Explained](https://crux.segv.tech/docs/ai-briefs)
+- [Integrations](https://crux.segv.tech/docs/integrations)
 
-### Integration Guides
-- [GitHub Actions Integration](./docs/integrations/github-actions.md)
-- [Linear Custom Fields](./docs/integrations/linear.md)
-- [Slack Workflows](./docs/integrations/slack.md)
+---
 
-### Advanced
-- [Self-Hosting Guide](./docs/self-hosting.md)
-- [Security & Compliance](./docs/security.md)
-- [Performance Tuning](./docs/performance.md)
+## Deployment
+
+The frontend (landing + docs) is hosted on **Cloudflare Pages** and auto-deploys on every push to `main`.
+
+| Setting | Value |
+|---|---|
+| Build command | `pnpm --filter @crux/site build` |
+| Build output directory | `apps/site/dist` |
+| Node version | `22` (env: `NODE_VERSION`) |
+| Package manager | pnpm via Corepack (`packageManager` field) |
+
+The backend will live in `apps/server` as a TypeScript workspace package; it is being integrated separately.
 
 ---
 
@@ -370,7 +358,7 @@ We welcome contributions! Here's how:
 
 1. **Fork the repo**
    ```bash
-   git clone https://github.com/yourusername/crux.git
+   git clone https://github.com/segv-oss/crux.git
    ```
 
 2. **Create a feature branch**
@@ -410,9 +398,7 @@ npm run build
 ### Reporting Issues
 
 Found a bug? Have a feature request?
-- [GitHub Issues](https://github.com/cruxdev/crux/issues)
-- [Community Slack](https://cruxdev.slack.com)
-- [Security Vulnerabilities](./SECURITY.md)
+- [GitHub Issues](https://github.com/segv-oss/crux/issues)
 
 ---
 
@@ -441,7 +427,7 @@ Found a bug? Have a feature request?
 A: Quite the opposite. Teams report 2-3 hours saved per developer per week by eliminating app-switching. The Sandbox removes "run it locally" friction. Review cycles drop 40%.
 
 **Q: What happens to my data?**  
-A: We never store your code. Crux reads PRs, analyzes them in-memory for AI briefs, then discards the data. All synced data (tasks, discussions) lives in your own GitHub/Linear/Slack accounts. See [Security & Privacy](./docs/security.md).
+A: We never store your code. Crux reads PRs, analyzes them in-memory for AI briefs, then discards the data. All synced data (tasks, discussions) lives in your own GitHub/Linear/Slack accounts.
 
 **Q: Can I use Crux for private repositories?**  
 A: Yes. GitHub API permissions are scoped. Private repos are never exposed. Self-hosting is available for additional privacy.
@@ -475,6 +461,6 @@ Special thanks to our beta users and open-source contributors who shaped Crux in
 
 **Ready to end context-switching?**
 
-[Start Free](https://app.cruxdev.io) • [Book a Demo](https://calendly.com/crux/demo) • [GitHub](https://github.com/cruxdev/crux)
+[GitHub](https://github.com/segv-oss/crux) • [Documentation](https://crux.segv.tech/docs/getting-started)
 
 </div>
