@@ -8,11 +8,16 @@
   },
   "scripts": {
     "dev": "turbo run dev",
+    "dev:server": "turbo run dev --filter=@crux/server",
+    "dev:cockpit": "turbo run dev --filter=@crux/cockpit",
     "dev:site": "turbo run dev --filter=@crux/site",
     "build": "turbo run build",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:migrate": "pnpm --filter @crux/server db:migrate",
+    "db:seed": "pnpm --filter @crux/server db:seed"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

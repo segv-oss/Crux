@@ -6,6 +6,7 @@ const links = [
   { href: '/#cockpit', label: 'Cockpit' },
   { href: '/#briefs', label: 'Briefs' },
   { href: '/docs/getting-started', label: 'Docs' },
+  { href: 'http://localhost:5174', label: 'Launch Cockpit' },
 ];
 
 export function Navbar() {

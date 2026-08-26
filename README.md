@@ -6,7 +6,7 @@
 
 Crux collapses fragmented communication loops into a single, real-time collaboration hub—where GitHub PRs, Linear tasks, and Slack discussions converge into actionable intelligence.
 
-[Documentation](#documentation) • [Features](#features) • [Getting Started](#getting-started) • [Playground](#playground)
+[Documentation](#documentation) • [Architecture](#architecture) • [Getting Started](#getting-started) • [Deployment & Custom Domains](#deployment--custom-domains)
 
 </div>
 
@@ -47,99 +47,67 @@ Crux bridges this gap with:
 A unified workspace that displays everything a developer needs in a single glance:
 
 - **Left Panel: Metadata & Context**
-  - PR author, reviewers, and assignment status
-  - Linked Linear tasks and dependencies
-  - Branch info, commit count, and deployment targets
-  - Recent Slack discussion thread summaries
+  - PR author, reviewers, and approval status
+  - Interactive linked Linear tasks (toggle completion directly)
+  - Review decision composer (Approve, Request Changes, Comment)
+  - Policy enforcement (quorum and required approvals)
 
 - **Center Panel: Live Code & Diff**
-  - Syntax-highlighted, interactive diffs
+  - Syntax-highlighted, interactive AST-based diff viewer
   - File-level impact analysis (additions, deletions, refactors)
-  - Inline comments and annotations
-  - Full commit history with cherry-pick support
+  - Inline code comments with real-time sync
+  - Fast keyboard shortcuts (⌘↵ to post comments)
 
-- **Right Panel: Real-Time Task Sync**
-  - Live Linear task updates mirrored from task management
-  - Slack thread context and team discussions
-  - Reviewer feedback and approval status
-  - Integration checkpoints (CI/CD status, deployment gates)
-
-**Why it matters:** No more tab-switching between three apps. No more context loss. Just pure, focused collaboration.
+- **Right Panel: Real-Time Live Sync & AI Briefs**
+  - Automated Reviewer Briefs with risk scoring and checklist suggestions
+  - Real-time event stream powered by Socket.IO
+  - Live team discussion feed with instant chat composer
+  - Dynamic CI/CD checks and merge status indicators
 
 ---
 
-### 🤖 AI Reviewer Briefs
-Automatically scan incoming PRs to generate intelligent, actionable summaries:
+## Architecture & Monorepo Structure
 
-- **Critical-Path Analysis:** Identifies changes that cascade through the codebase
-- **Schema & Contract Detection:** Flags database migrations, API contract changes, and breaking changes
-- **Test Coverage Insights:** Highlights untested code paths and suggests test scenarios
-- **Dependency Impact:** Maps upstream/downstream service dependencies affected by the PR
-- **Performance Signals:** Detects potential bottlenecks, memory leaks, and inefficient queries
-- **Security Scan Pre-Filtering:** Surfaces high-risk changes (auth, secrets, permissions) before human review
-
-**Output:** A 2-minute brief that answers *"What should I care about in this PR?"* before a reviewer even opens it.
-
-**Impact:** 40% faster review cycles. Fewer "request changes" rounds. Better quality gates.
-
----
-
-### 🎮 Zero-Friction Sandbox
-One-click guest access for reviewers to *test* PRs live—with pre-loaded sample data and instant multi-user synchronization:
-
-- **Instant Environments:** Deploy PR branches with production-like data in seconds
-- **Multi-User Testing:** Watch real-time sync behavior across concurrent users without manual setup
-- **Sample Data Injection:** Pre-populated datasets for realistic edge-case testing
-- **No Auth Friction:** Sign-in-less guest sessions that expire automatically
-- **Live Diff Alongside Testing:** Split-screen code + running app for immediate validation
-
-**Why it matters:** Reviewers no longer say *"I'll trust it works"*. They *know* it works because they tested it, live, in 60 seconds.
-
-**Result:** Confident approvals. Fewer post-merge surprises. Faster time to main.
-
----
-
-## Key Benefits
-
-| Benefit | Impact |
-|---------|--------|
-| **Reduced Context-Switching** | 2-3 hours/developer/week saved on app navigation and state recovery |
-| **Faster Review Cycles** | 40% reduction in review-to-merge time through AI insights and sandbox testing |
-| **Improved Code Quality** | Pre-review scanning catches 60%+ of common issues before human eyes |
-| **Async-First Workflow** | Rich context bridges timezone differences and async reviews |
-| **Onboarding Speed** | New reviewers ramp 50% faster with AI summaries and guided walkthroughs |
-| **Reduced Merge Conflicts** | Real-time visibility prevents accidental divergence early |
-
----
-
-## How It Works
-
-### Workflow: From PR to Merge
+Crux is engineered as a high-performance TypeScript monorepo powered by **Turborepo** and **pnpm workspaces**:
 
 ```
-1. Developer Opens PR
-   ↓
-2. Crux Auto-Scans Diff
-   ├─ AI generates Reviewer Brief
-   ├─ Schema changes flagged
-   ├─ Test coverage analyzed
-   └─ Slack notification sent with summary
-   ↓
-3. Reviewers Access Crux Cockpit
-   ├─ See Brief + full context
-   ├─ Launch Sandbox to test live
-   ├─ Leave inline comments
-   └─ Sync updates to Slack in real-time
-   ↓
-4. Developer Iterates
-   ├─ New commits trigger re-scans
-   ├─ Linear task auto-updates
-   └─ Team stays in-sync without checking multiple apps
-   ↓
-5. Merge with Confidence
-   ├─ All checkpoints verified
-   ├─ Deployment gates checked
-   └─ Post-merge sync to Linear closes task
+crux/
+├── apps/
+│   ├── site/            # Marketing & Documentation (React 19, Vite SSR, Tailwind CSS v4)
+│   ├── cockpit/         # Interactive Cockpit Web App (React 19, Socket.IO client, Vite)
+│   └── server/          # Backend API & WebSocket Engine (Hono, Node HTTP, Socket.IO, PostgreSQL, Redis)
+├── packages/
+│   ├── api-contract/    # Shared Zod schemas, OpenAPI specs, and TypeScript DTOs
+│   └── config/          # Shared tooling and Tailwind configs
+├── docker-compose.yml   # Local PostgreSQL 16 & Redis 7 stack
+└── turbo.json           # Turbo build and pipeline configuration
+```
+
+### High-Level System Architecture
+
+```
+┌───────────────────────────────────────────────────────────┐
+│              Crux Cockpit / Marketing Site                │
+│    (React 19 · Vite · Tailwind v4 · Socket.IO Client)     │
+└───────────────┬───────────────────────────┬───────────────┘
+                │                           │
+         WebSocket (Live Sync)       REST API (/api/v1)
+                │                           │
+┌───────────────▼───────────────────────────▼───────────────┐
+│                    Crux API Server                        │
+│       (Hono · Node Server · Socket.IO · TypeScript)       │
+│                                                           │
+│ ├─ PR & Review Quorum Engine    ├─ Multi-Tenant RBAC      │
+│ ├─ Monotonic Event Journal      ├─ Outbox Relay & Queues  │
+│ ├─ Idempotency Guard Fencing    ├─ Webhook HMAC Ingress   │
+│ └─ Sandbox Proxy Security       └─ AI Brief Generator     │
+└───────────────┬───────────────────────────┬───────────────┘
+                │                           │
+        ┌───────▼────────┐          ┌───────▼────────┐
+        │   PostgreSQL   │          │     Redis      │
+        │(Event Journal, │          │(Pub/Sub, Sync, │
+        │ State, RBAC)   │          │  Rate Limits)  │
+        └────────────────┘          └────────────────┘
 ```
 
 ---
@@ -148,319 +116,101 @@ One-click guest access for reviewers to *test* PRs live—with pre-loaded sample
 
 ### Prerequisites
 
-- GitHub organization with API access
-- Linear workspace with API key
-- Slack workspace with app permissions
-- Node.js 18+ (for local development)
+- **Node.js**: v20 or v22+
+- **Package Manager**: `pnpm` (v10+ recommended)
+- **Docker**: For PostgreSQL and Redis
 
-### Installation
-
-#### Hosted Frontend
-
-The marketing site and documentation are deployed on Cloudflare Pages and deploy automatically on every commit to `main`.
-
-#### Self-Hosted
+### Local Development Setup
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/segv-oss/crux.git
 cd crux
 
-# Install dependencies
-npm install
+# 2. Install workspace dependencies
+pnpm install
 
-# Configure environment variables
-cp .env.example .env
-# Edit .env with your GitHub, Linear, and Slack API keys
+# 3. Start local database & cache
+docker compose up -d
 
-# Start the development server
-npm run dev
+# 4. Run database migrations and seed data
+pnpm db:migrate
+pnpm db:seed
 
-# Server runs on http://localhost:3000
-```
-
-### Configuration
-
-Create a `.env` file in your project root:
-
-```env
-# GitHub
-GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxx
-GITHUB_WEBHOOK_SECRET=whsec_xxxxx
-
-# Linear
-LINEAR_API_KEY=lin_xxxxxxxxxxxxxxxxxxxxxxxx
-LINEAR_WORKSPACE_ID=workspace_xxx
-
-# Slack
-SLACK_BOT_TOKEN=xoxb-xxxxxxxxxxxxxxxxxxxxxxxx
-SLACK_SIGNING_SECRET=xxxxxxxxxxxx
-
-# Crux
-DATABASE_URL=postgresql://user:pass@localhost/crux
-JWT_SECRET=your_jwt_secret_here
-NODE_ENV=development
-```
-
-### First Steps
-
-1. **Connect Your First Repository**
-   - Dashboard → Repositories → "+ Add Repository"
-   - Select from your GitHub orgs
-   - Crux auto-configures webhook
-
-2. **Create Your Team**
-   - Dashboard → Team Settings → "+ Add Members"
-   - Invite via email or Slack
-   - Set reviewer roles and permissions
-
-3. **Open a Test PR**
-   - Push a branch to your connected repo
-   - Open a PR on GitHub
-   - Watch Crux Cockpit populate in real-time
-   - Try the Sandbox with sample data
-
----
-
-## Use Cases
-
-### 🚀 High-Velocity Startups
-**Challenge:** Small team, big ship window. Reviews become a bottleneck.  
-**Crux Solution:** AI briefs cut review time in half. Sandbox testing removes "run it locally" friction.  
-**Result:** Ship velocity +40%, reviewer burnout -60%.
-
-### 🏢 Enterprise Codebases
-**Challenge:** Large PRs, distributed teams, complex interdependencies.  
-**Crux Solution:** Critical-path analysis prevents cascading bugs. Real-time sync bridges 12-hour timezone gaps.  
-**Result:** Fewer P1s post-merge. Review quality improved despite async workflows.
-
-### 🔄 Regulatory/Compliance Teams
-**Challenge:** Every change needs audit trail and stakeholder sign-off.  
-**Crux Solution:** All discussions, approvals, and reasoning logged in one place. AI summaries for compliance officers.  
-**Result:** 80% faster compliance reviews. Audit-ready by design.
-
-### 🎓 Distributed Engineering Teams
-**Challenge:** Onboarding reviewers across timezones and knowledge domains.  
-**Crux Solution:** AI briefs serve as self-serve onboarding. Sandbox lets unfamiliar reviewers validate PRs without context loss.  
-**Result:** Junior devs effective reviewers 2-3 weeks faster.
-
----
-
-## Architecture
-
-### Tech Stack
-
-- **Frontend:** React 18, TanStack Query, WebSockets (real-time sync)
-- **Backend:** Node.js/Express, TypeScript, PostgreSQL
-- **AI/ML:** Claude API for code analysis, embedding-based similarity search
-- **Infrastructure:** Docker, Kubernetes (optional), AWS/GCP ready
-- **Real-Time:** Socket.io for live collaboration, Redis for message broker
-
-### High-Level System Diagram
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Crux Cockpit UI                      │
-│  (3-Column: Metadata | Code | Tasks | Discussions)     │
-└───────────────┬───────────────────────────────────────┘
-                │
-        ┌───────┴────────┐
-        │                │
-   ┌────▼─────┐    ┌────▼─────┐
-   │ WebSocket│    │  REST API │
-   │ (Real-   │    │ (Commands)│
-   │ time)    │    │           │
-   └────┬─────┘    └────┬──────┘
-        │                │
-   ┌────▴─────────────────▴───┐
-   │   Crux Backend Service    │
-   │  (Node.js + TypeScript)   │
-   │                           │
-   │ ├─ PR Analyzer (AI)       │
-   │ ├─ Sync Engine            │
-   │ ├─ Webhook Processors     │
-   │ └─ Sandbox Manager        │
-   └────┬─────────────────┬────┘
-        │                 │
-   ┌────▼────┐      ┌────▼────────────┐
-   │PostgreSQL│      │ External APIs   │
-   │Database  │      │ ├─ GitHub       │
-   └──────────┘      │ ├─ Linear       │
-                     │ ├─ Slack        │
-                     │ └─ Claude (AI)  │
-                     └─────────────────┘
+# 5. Start all services in development mode
+# In separate terminal windows:
+pnpm dev:server    # Backend API on http://localhost:4000
+pnpm dev:cockpit   # Cockpit App on http://localhost:5174
+pnpm dev:site      # Marketing Site on http://localhost:5173
 ```
 
 ---
 
-## Performance & Reliability
+## Deployment & Custom Domains
 
-- **Cockpit Load Time:** < 800ms cold start, < 200ms hot load
-- **Real-Time Sync Latency:** < 500ms end-to-end (Slack → Crux → GitHub)
-- **Uptime SLA:** 99.95% (cloud deployment)
-- **AI Reviewer Brief Generation:** 30-90 seconds per PR (parallelized)
-- **Sandbox Spin-Up:** < 60 seconds from one-click to live environment
+### 1. Landing Page & Documentation (`apps/site`) on Cloudflare Pages
 
----
+The landing site is optimized for **Cloudflare Pages**:
 
-## Pricing
+1. In Cloudflare Dashboard, go to **Workers & Pages** → **Create application** → **Pages** → **Connect to Git**.
+2. Select your repository and configure build settings:
+   - **Framework preset**: `None` / `Vite`
+   - **Build command**: `pnpm --filter @crux/site build`
+   - **Build output directory**: `apps/site/dist`
+   - **Environment variables**: `NODE_VERSION=22`
+3. **Custom Domain Setup**:
+   - In your Cloudflare Pages project, click **Custom domains** → **Set up a custom domain**.
+   - Enter your domain (e.g. `crux.dev` or `yourdomain.com`).
+   - If your domain DNS is managed on Cloudflare, DNS records and SSL/TLS edge certificates are created automatically.
+   - If using external DNS, add a `CNAME` record pointing to `<project>.pages.dev`.
 
-### Free Tier
-- Up to 3 public repositories
-- Up to 5 team members
-- Basic Reviewer Briefs (no advanced analysis)
-- Community support
+### 2. Cockpit Web App (`apps/cockpit`)
 
-### Pro
-- Unlimited repositories
-- Up to 50 team members
-- Full AI Reviewer Briefs + schema detection
-- Priority Slack support
-- **$29/user/month** (billed annually)
+Deploy Cockpit as a second Cloudflare Pages project (or subdomain like `app.yourdomain.com`):
+- **Build command**: `pnpm --filter @crux/cockpit build`
+- **Build output directory**: `apps/cockpit/dist`
+- **Environment variables**:
+  - `VITE_API_MODE=live`
+- SPA routing rules (`_redirects` and `_headers`) are pre-configured in `apps/cockpit/public/`.
 
-### Enterprise
-- Unlimited everything
-- Custom AI training on your codebase
-- Self-hosted option
-- Dedicated success manager
-- **Custom pricing**
+### 3. Backend API (`apps/server`)
 
----
-
-## Documentation
-
-### Core Guides
-- [Getting Started](https://crux.segv.tech/docs/getting-started)
-- [Cockpit Usage Guide](https://crux.segv.tech/docs/cockpit)
-- [AI Reviewer Briefs Explained](https://crux.segv.tech/docs/ai-briefs)
-- [Integrations](https://crux.segv.tech/docs/integrations)
-
----
-
-## Deployment
-
-The frontend (landing + docs) is hosted on **Cloudflare Pages** and auto-deploys on every push to `main`.
-
-| Setting | Value |
-|---|---|
-| Build command | `pnpm --filter @crux/site build` |
-| Build output directory | `apps/site/dist` |
-| Node version | `22` (env: `NODE_VERSION`) |
-| Package manager | pnpm via Corepack (`packageManager` field) |
-
-The backend will live in `apps/server` as a TypeScript workspace package; it is being integrated separately.
+Deploy the Hono + Socket.IO server to any container platform supporting WebSockets (e.g., Railway, Fly.io, Render, AWS ECS, or a VPS):
+- Set production environment variables:
+  ```env
+  NODE_ENV=production
+  PORT=4000
+  DATABASE_URL=postgresql://user:password@your-db-host:5432/crux_db
+  REDIS_URL=redis://your-redis-host:6379
+  JWT_SECRET=your_super_secret_production_jwt_key_at_least_32_chars!
+  COOKIE_SECRET=your_super_secret_cookie_key_at_least_32_chars!
+  CORS_ORIGIN=https://yourdomain.com,https://app.yourdomain.com
+  PRIMARY_WEBHOOK_SECRET=whsec_your_primary_webhook_secret_here
+  ```
+- Point `api.yourdomain.com` to your backend instance via a Cloudflare DNS `CNAME` record.
 
 ---
 
-## Contributing
+## Verification & Testing
 
-We welcome contributions! Here's how:
-
-1. **Fork the repo**
-   ```bash
-   git clone https://github.com/segv-oss/crux.git
-   ```
-
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-3. **Make your changes**
-   - Follow our [Code Style Guide](./CONTRIBUTING.md#code-style)
-   - Add tests for new functionality
-   - Update docs if needed
-
-4. **Submit a PR**
-   - Link to related issues
-   - Include screenshots for UI changes
-   - Our maintainers will review within 48 hours
-
-### Development Setup
+Crux includes a comprehensive automated test and quality suite:
 
 ```bash
-# Install dependencies
-npm install
+# Run backend security & integration tests
+pnpm test
 
-# Run tests
-npm run test
+# Run TypeScript typecheck across all workspaces
+pnpm typecheck
 
-# Start dev server with hot reload
-npm run dev
+# Run Biome linter & code formatter
+pnpm lint
 
-# Run linter
-npm run lint
-
-# Build for production
-npm run build
+# Build all packages for production
+pnpm build
 ```
-
-### Reporting Issues
-
-Found a bug? Have a feature request?
-- [GitHub Issues](https://github.com/segv-oss/crux/issues)
-
----
-
-## Roadmap
-
-### Q4 2024
-- [ ] Figma integration for design-to-code workflows
-- [ ] GitHub Actions native UI (preview logs in Cockpit)
-- [ ] Batch sandbox environments for multi-service testing
-
-### Q1 2025
-- [ ] CodeOwners auto-assignment logic
-- [ ] Custom AI brief templates (trained on team standards)
-- [ ] Jira/Asana compatibility layer
-
-### Q2 2025
-- [ ] ML-powered auto-approval for low-risk PRs
-- [ ] Time-travel debugging for sandbox sessions
-- [ ] Advanced analytics dashboard (review velocity, approval rates)
-
----
-
-## FAQ
-
-**Q: Will Crux slow down my workflow?**  
-A: Quite the opposite. Teams report 2-3 hours saved per developer per week by eliminating app-switching. The Sandbox removes "run it locally" friction. Review cycles drop 40%.
-
-**Q: What happens to my data?**  
-A: We never store your code. Crux reads PRs, analyzes them in-memory for AI briefs, then discards the data. All synced data (tasks, discussions) lives in your own GitHub/Linear/Slack accounts.
-
-**Q: Can I use Crux for private repositories?**  
-A: Yes. GitHub API permissions are scoped. Private repos are never exposed. Self-hosting is available for additional privacy.
-
-**Q: Does Crux replace GitHub, Linear, or Slack?**  
-A: No. Crux *augments* them. We're a thin, smart layer on top of your existing tools. You still do everything in GitHub, Linear, and Slack—Crux just makes the handoffs seamless.
-
-**Q: What's the AI accuracy on Reviewer Briefs?**  
-A: ~95% precision on schema changes and breaking changes. ~85% on test coverage gaps (varies by language/framework). False positives are rare; we're conservative.
-
-**Q: How does real-time sync work if one service is down?**  
-A: Crux queues changes and syncs when services recover. No data loss, no orphaned tasks. Eventual consistency is guaranteed within 5 minutes.
 
 ---
 
 ## License
 
 Crux is licensed under the [MIT License](./LICENSE).
-
----
-
-## Acknowledgments
-
-Built with ❤️ by developers, for developers.
-
-Special thanks to our beta users and open-source contributors who shaped Crux into what it is today.
-
----
-
-<div align="center">
-
-**Ready to end context-switching?**
-
-[GitHub](https://github.com/segv-oss/crux) • [Documentation](https://crux.segv.tech/docs/getting-started)
-
-</div>

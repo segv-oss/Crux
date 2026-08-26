@@ -4,51 +4,93 @@ Crux unifies GitHub pull requests, Linear tasks, and Slack discussions into a si
 
 ## Prerequisites
 
-- A GitHub organization with API access
-- A Linear workspace with an API key
-- A Slack workspace where you can install apps
-- Node.js 20+ for local development
+- **Node.js**: v20 or v22+
+- **pnpm**: v10+
+- **Docker**: For PostgreSQL 16 and Redis 7 (or cloud database connections)
+- A GitHub organization with API / Webhook access
+- A Linear workspace API key (optional for task sync)
+- A Slack workspace for notifications (optional for thread sync)
 
-## Cloud setup
+---
 
-The fastest way to run Crux is the hosted dashboard:
+## Local Monorepo Setup
 
-1. Connect your GitHub org via OAuth and select repositories.
-2. Paste your Linear API key from Linear settings.
-3. Install the Crux Slack app and approve permissions.
-
-Once connected, PRs route through Crux automatically.
-
-## Self-hosting
+Clone the repository and install workspace dependencies:
 
 ```bash
+# 1. Clone repository
 git clone https://github.com/segv-oss/crux.git
 cd crux
+
+# 2. Install monorepo dependencies
 pnpm install
-cp .env.example .env
-pnpm dev
+
+# 3. Boot PostgreSQL & Redis containers
+docker compose up -d
+
+# 4. Migrate database schema and seed initial demo data
+pnpm db:migrate
+pnpm db:seed
+
+# 5. Start development services
+pnpm dev:server    # Backend API & WebSocket server on http://localhost:4000
+pnpm dev:cockpit   # Cockpit interactive web app on http://localhost:5174
+pnpm dev:site      # Marketing & documentation site on http://localhost:5173
 ```
 
-The development server starts at `http://localhost:3000`.
+---
 
-## Configuration
+## Cloudflare Pages Deployment & Custom Domain
 
-Fill in your `.env` with integration credentials:
+### Deploying the Landing Page (`apps/site`)
+
+The marketing site is pre-configured for Cloudflare Pages:
+
+1. **Connect Repository**:
+   - In the [Cloudflare Dashboard](https://dash.cloudflare.com/), navigate to **Workers & Pages** → **Create application** → **Pages** → **Connect to Git**.
+   - Select your Crux repository.
+2. **Build Settings**:
+   - **Framework preset**: `Vite` (or `None`)
+   - **Build command**: `pnpm --filter @crux/site build`
+   - **Build output directory**: `apps/site/dist`
+   - **Environment variables**: Add `NODE_VERSION=22`.
+3. **Custom Domain Setup**:
+   - Go to your Pages project → **Custom domains** tab → click **Set up a custom domain**.
+   - Enter your domain name (e.g. `crux.dev` or `yourdomain.com`).
+   - If your domain's DNS is managed by Cloudflare, it will automatically route traffic and issue an SSL/TLS edge certificate.
+   - If your DNS is with an external provider (GoDaddy, Namecheap, AWS Route 53), create a `CNAME` record pointing to `<project-name>.pages.dev`.
+
+### Deploying the Cockpit App (`apps/cockpit`)
+
+Deploy Cockpit as a separate Pages project (e.g. on `app.yourdomain.com`):
+- **Build command**: `pnpm --filter @crux/cockpit build`
+- **Build output directory**: `apps/cockpit/dist`
+- **Environment variables**: `VITE_API_MODE=live`
+- Pre-configured `_redirects` ensures clean single-page app (SPA) routing on all deep links.
+
+---
+
+## Backend Environment Configuration
+
+When deploying the backend service (`apps/server`) to production (Railway, Fly.io, Render, AWS, or VPS), configure the following environment variables:
 
 ```bash
-GITHUB_TOKEN=ghp_xxx
-GITHUB_WEBHOOK_SECRET=whsec_xxx
-LINEAR_API_KEY=lin_xxx
-SLACK_BOT_TOKEN=xoxb-xxx
-SLACK_SIGNING_SECRET=xxx
-DATABASE_URL=postgresql://user:pass@localhost/crux
-JWT_SECRET=your_jwt_secret_here
+NODE_ENV=production
+PORT=4000
+DATABASE_URL=postgresql://user:pass@your-db-host:5432/crux_db
+REDIS_URL=redis://your-redis-host:6379
+JWT_SECRET=your_secure_32_character_jwt_secret_key!
+COOKIE_SECRET=your_secure_32_character_cookie_secret_key!
+CORS_ORIGIN=https://yourdomain.com,https://app.yourdomain.com
+PRIMARY_WEBHOOK_SECRET=whsec_primary_secret_here
+FALLBACK_WEBHOOK_SECRET=whsec_fallback_secret_here
 ```
 
-## First steps
+---
 
-1. **Connect a repository** — Dashboard → Repositories → Add Repository. Crux auto-configures the webhook.
-2. **Create your team** — Dashboard → Team Settings → Add Members. Invite via email or Slack.
-3. **Open a test PR** — Push a branch, open a PR on GitHub, and watch the Crux Cockpit populate in real time.
+## First Steps in Cockpit
 
-Questions? Open an issue on [GitHub](https://github.com/segv-oss/crux/issues).
+1. **Open the Cockpit**: Navigate to `http://localhost:5174/prs` (or your production app domain).
+2. **Toggle Modes**: Use the top-right badge to switch between **Mock Data** and **Live Backend API**.
+3. **Review PR #342**: Open the pre-seeded distributed lock PR to explore interactive AST diffs, task checkboxes, and AI briefs.
+4. **Submit a Review**: Click `+ Review` in the metadata column to approve or request changes in real time.
