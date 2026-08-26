@@ -2,7 +2,7 @@ import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import jwt from 'jsonwebtoken';
-import { redisPubClient, redisSubClient } from '../config/redis.js';
+import { redisPubClient, redisSubClient, isRedisReady } from '../config/redis.js';
 import { config } from '../config/env.js';
 import { pool } from '../config/db.js';
 import { reconcileClientState } from './stateSync.js';
@@ -23,15 +23,19 @@ export function initializeWebSocketServer(httpServer: HttpServer): Server {
     transports: ['websocket', 'polling'],
   });
 
-  // Attach Redis adapter for horizontal cluster pub/sub
-  try {
-    io.adapter(createAdapter(redisPubClient, redisSubClient));
-    logger.info('Attached Redis Adapter to Socket.IO server');
-  } catch (err) {
-    logger.warn({ err }, 'Redis adapter attachment failed, running single-node socket server');
+  // Attach Redis adapter only if Redis cluster is fully ready & connected
+  if (isRedisReady()) {
+    try {
+      io.adapter(createAdapter(redisPubClient, redisSubClient));
+      logger.info('Attached Redis Adapter to Socket.IO server');
+    } catch (err) {
+      logger.warn({ err }, 'Redis adapter attachment failed, falling back to in-memory socket server');
+    }
+  } else {
+    logger.info('Running Socket.IO server in standalone in-memory mode (Redis offline/degraded)');
   }
 
-  // Handshake authentication middleware
+  // Handshake authentication middleware with pinned algorithm
   io.use(async (socket: Socket, next) => {
     const authHeader = socket.handshake.auth?.token || socket.handshake.headers?.authorization;
     if (!authHeader) {
@@ -40,7 +44,9 @@ export function initializeWebSocketServer(httpServer: HttpServer): Server {
 
     const token = authHeader.replace(/^Bearer\s+/, '');
     try {
-      const decoded = jwt.verify(token, config.JWT_SECRET) as JwtPayload;
+      const decoded = jwt.verify(token, config.JWT_SECRET, {
+        algorithms: ['HS256'],
+      }) as JwtPayload;
       (socket as any).user = {
         id: decoded.userId,
         email: decoded.email,
@@ -100,7 +106,7 @@ export function initializeWebSocketServer(httpServer: HttpServer): Server {
         if (typeof lastSequenceNumber === 'number') {
           await reconcileClientState(socket, prId, lastSequenceNumber);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error({ err, userId: user.id, prId }, 'Error processing pr:join');
         socket.emit('error', { code: 'SERVER_ERROR', message: 'Failed to join PR room' });
       }
@@ -118,26 +124,32 @@ export function initializeWebSocketServer(httpServer: HttpServer): Server {
     });
   });
 
-  // Subscribe to Redis Pub/Sub crux:events to broadcast to rooms
-  redisSubClient.subscribe('crux:events', (err) => {
-    if (err) logger.warn({ err }, 'Failed to subscribe to crux:events Pub/Sub channel');
-  });
+  // Subscribe to Redis Pub/Sub crux:events if Redis is active
+  if (isRedisReady()) {
+    try {
+      redisSubClient.subscribe('crux:events', (err) => {
+        if (err) logger.warn({ err }, 'Failed to subscribe to crux:events Pub/Sub channel');
+      });
 
-  redisSubClient.on('message', (channel, message) => {
-    if (channel === 'crux:events') {
-      try {
-        const event = JSON.parse(message);
-        if (event.prId && io) {
-          io.to(`pr:${event.prId}`).emit(event.eventType, event);
+      redisSubClient.on('message', (channel, message) => {
+        if (channel === 'crux:events') {
+          try {
+            const event = JSON.parse(message);
+            if (event.prId && io) {
+              io.to(`pr:${event.prId}`).emit(event.eventType, event);
+            }
+            if (event.repoId && io) {
+              io.to(`repo:${event.repoId}`).emit(event.eventType, event);
+            }
+          } catch (parseErr) {
+            logger.error({ parseErr }, 'Failed to parse incoming crux:events message');
+          }
         }
-        if (event.repoId && io) {
-          io.to(`repo:${event.repoId}`).emit(event.eventType, event);
-        }
-      } catch (parseErr) {
-        logger.error({ parseErr }, 'Failed to parse incoming crux:events message');
-      }
+      });
+    } catch (err) {
+      logger.warn({ err }, 'Error setting up Redis Pub/Sub listener on socket server');
     }
-  });
+  }
 
   return io;
 }

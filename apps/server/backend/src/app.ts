@@ -41,11 +41,13 @@ export function createApp(): Hono<AppEnv> {
     })
   );
 
-  // 3. Request Logger
+  // 3. Request Logger & Trace ID
   app.use('*', async (c, next) => {
     const start = Date.now();
-    const reqId = crypto.randomUUID();
+    const incomingReqId = c.req.header('x-crux-request-id') || c.req.header('x-request-id');
+    const reqId = incomingReqId && incomingReqId.trim().length > 0 ? incomingReqId.trim() : crypto.randomUUID();
     c.header('x-request-id', reqId);
+    c.header('x-crux-request-id', reqId);
 
     await next();
 
@@ -69,7 +71,7 @@ export function createApp(): Hono<AppEnv> {
         name: 'Crux Backend API Service',
         version: config.APP_VERSION,
         status: 'online',
-        docs: 'API_CONTRACT.md',
+        docs: 'packages/api-contract/contract.md',
       },
       200
     );

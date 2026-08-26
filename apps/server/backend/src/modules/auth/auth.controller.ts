@@ -1,5 +1,5 @@
 import { Context } from 'hono';
-import { setCookie, deleteCookie } from 'hono/cookie';
+import { setCookie, deleteCookie, getCookie } from 'hono/cookie';
 import * as authService from './auth.service.js';
 import { config } from '../../config/env.js';
 import { AppEnv } from '../../types/hono.js';
@@ -13,7 +13,7 @@ export async function handleGitHubCallback(c: Context<AppEnv>) {
   const code = c.req.query('code') as string;
   const result = await authService.exchangeGitHubCode(code);
 
-  // Set secure refresh token cookie
+  // Set secure refresh token cookie (httpOnly to prevent XSS exfiltration)
   setCookie(c, 'auth_refresh', result.refreshToken, {
     httpOnly: true,
     secure: config.NODE_ENV === 'production',
@@ -26,11 +26,42 @@ export async function handleGitHubCallback(c: Context<AppEnv>) {
     {
       data: {
         accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
         tokenType: 'Bearer',
         expiresIn: 900,
         user: result.user,
         organizations: result.organizations,
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+      },
+    },
+    200
+  );
+}
+
+export async function refreshAccessToken(c: Context<AppEnv>) {
+  const cookieToken = getCookie(c, 'auth_refresh');
+  const body = await c.req.json().catch(() => ({}));
+  const refreshToken = cookieToken || body.refreshToken;
+
+  const result = await authService.refreshAccessToken(refreshToken);
+
+  // Rotate refresh token cookie
+  setCookie(c, 'auth_refresh', result.refreshToken, {
+    httpOnly: true,
+    secure: config.NODE_ENV === 'production',
+    sameSite: 'Lax',
+    path: '/',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  });
+
+  return c.json(
+    {
+      data: {
+        accessToken: result.accessToken,
+        tokenType: 'Bearer',
+        expiresIn: 900,
+        user: result.user,
       },
       meta: {
         timestamp: new Date().toISOString(),

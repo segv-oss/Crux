@@ -13,11 +13,16 @@ export interface JwtPayload {
 }
 
 export function signToken(payload: JwtPayload, expiresIn: string = '15m'): string {
-  return jwt.sign(payload, config.JWT_SECRET, { expiresIn: expiresIn as any });
+  return jwt.sign(payload, config.JWT_SECRET, {
+    algorithm: 'HS256',
+    expiresIn: expiresIn as any,
+  });
 }
 
 export function verifyToken(token: string): JwtPayload {
-  return jwt.verify(token, config.JWT_SECRET) as JwtPayload;
+  return jwt.verify(token, config.JWT_SECRET, {
+    algorithms: ['HS256'],
+  }) as JwtPayload;
 }
 
 export const authenticate = createMiddleware<AppEnv>(async (c, next) => {
@@ -45,8 +50,8 @@ export const authenticate = createMiddleware<AppEnv>(async (c, next) => {
     c.set('user', payload);
     c.set('userId', payload.userId);
     await next();
-  } catch (err: any) {
-    if (err.name === 'TokenExpiredError') {
+  } catch (err: unknown) {
+    if (err instanceof jwt.TokenExpiredError) {
       throw new AppError({
         status: 401,
         code: 'TOKEN_EXPIRED',

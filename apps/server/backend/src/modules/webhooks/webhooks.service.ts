@@ -54,11 +54,13 @@ export function verifyHmacSignature(
   }
 
   // 2. Try FALLBACK secret for zero-downtime rotation
-  const fallbackHmac = crypto.createHmac('sha256', config.FALLBACK_WEBHOOK_SECRET).update(rawBody).digest('hex');
-  const fallbackBuf = Buffer.from(fallbackHmac, 'hex');
+  if (config.FALLBACK_WEBHOOK_SECRET) {
+    const fallbackHmac = crypto.createHmac('sha256', config.FALLBACK_WEBHOOK_SECRET).update(rawBody).digest('hex');
+    const fallbackBuf = Buffer.from(fallbackHmac, 'hex');
 
-  if (sigBuf.length === fallbackBuf.length && crypto.timingSafeEqual(fallbackBuf, sigBuf)) {
-    return 'FALLBACK';
+    if (sigBuf.length === fallbackBuf.length && crypto.timingSafeEqual(fallbackBuf, sigBuf)) {
+      return 'FALLBACK';
+    }
   }
 
   throw new AppError({

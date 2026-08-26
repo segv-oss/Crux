@@ -7,18 +7,28 @@ import { config } from '../src/config/env.js';
 describe('HTTP API & Middleware Integration Test Suite (Hono Native Fetch)', () => {
   const app = createApp();
 
-  it('GET / should return online status and APP_VERSION', async () => {
+  it('GET / should return online status, APP_VERSION, and contract link', async () => {
     const res = await app.request('/');
     assert.equal(res.status, 200);
     const body = (await res.json()) as any;
     assert.equal(body.name, 'Crux Backend API Service');
     assert.equal(body.version, config.APP_VERSION);
     assert.equal(body.status, 'online');
+    assert.equal(body.docs, 'packages/api-contract/contract.md');
   });
 
-  it('GET /api/v1/health should return healthy status and timestamp', async () => {
-    const res = await app.request('/api/v1/health');
+  it('GET /api/v1/health should honor incoming x-crux-request-id and return healthy status', async () => {
+    const customTraceId = 'trace_custom_uuid_987654';
+    const res = await app.request('/api/v1/health', {
+      headers: {
+        'x-crux-request-id': customTraceId,
+      },
+    });
+
     assert.equal(res.status, 200);
+    assert.equal(res.headers.get('x-crux-request-id'), customTraceId, 'Must honor incoming x-crux-request-id');
+    assert.equal(res.headers.get('x-request-id'), customTraceId, 'Must mirror x-crux-request-id to x-request-id');
+
     const body = (await res.json()) as any;
     assert.equal(body.status, 'healthy');
     assert.equal(body.version, config.APP_VERSION);
@@ -74,6 +84,21 @@ describe('HTTP API & Middleware Integration Test Suite (Hono Native Fetch)', () 
     assert.equal(body.code, 'INVALID_PARAMS');
     assert.ok(Array.isArray(body.invalid_params));
     assert.equal(body.invalid_params[0].name, 'code');
+  });
+
+  it('POST /api/v1/auth/refresh without token should return 401 UNAUTHORIZED', async () => {
+    const res = await app.request('/api/v1/auth/refresh', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+
+    assert.equal(res.status, 401);
+    assert.equal(res.headers.get('content-type'), 'application/problem+json');
+    const body = (await res.json()) as any;
+    assert.equal(body.code, 'UNAUTHORIZED');
   });
 
   it('POST /api/v1/orgs/:orgId/repos/:repoId/prs/:prId/merge without auth should return 401 UNAUTHORIZED', async () => {

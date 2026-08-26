@@ -9,6 +9,22 @@ const logger = createLogger('rate-limiter');
 
 const inMemoryStore = new Map<string, { count: number; expiresAt: number }>();
 
+function extractClientIp(c: Context<AppEnv>): string {
+  const xRealIp = c.req.header('x-real-ip');
+  if (xRealIp && xRealIp.trim().length > 0) return xRealIp.trim();
+
+  const cfConnectingIp = c.req.header('cf-connecting-ip');
+  if (cfConnectingIp && cfConnectingIp.trim().length > 0) return cfConnectingIp.trim();
+
+  const xForwardedFor = c.req.header('x-forwarded-for');
+  if (xForwardedFor) {
+    const ips = xForwardedFor.split(',').map((ip) => ip.trim()).filter(Boolean);
+    if (ips.length > 0) return ips[0];
+  }
+
+  return '127.0.0.1';
+}
+
 export function createRateLimiter(options: {
   windowSeconds: number;
   maxRequests: number;
@@ -20,7 +36,7 @@ export function createRateLimiter(options: {
   return createMiddleware<AppEnv>(async (c, next) => {
     const id = identifierFn
       ? identifierFn(c)
-      : c.req.header('x-forwarded-for')?.split(',')[0].trim() || 'anonymous';
+      : c.get('userId') || extractClientIp(c);
     const key = `ratelimit:${keyPrefix}:${id}`;
     const now = Date.now();
 
@@ -77,11 +93,12 @@ export const sandboxLaunchLimiter = createRateLimiter({
   windowSeconds: 3600,
   maxRequests: 10,
   keyPrefix: 'sandbox-launch',
-  identifierFn: (c) => c.get('userId') || c.req.header('x-forwarded-for') || 'anon',
+  identifierFn: (c) => c.get('userId') || extractClientIp(c),
 });
 
 export const webhookIngressLimiter = createRateLimiter({
   windowSeconds: 60,
   maxRequests: 500,
   keyPrefix: 'webhook-ingress',
+  identifierFn: (c) => c.req.header('x-github-delivery') || extractClientIp(c),
 });

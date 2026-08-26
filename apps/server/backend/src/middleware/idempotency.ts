@@ -7,46 +7,49 @@ import { AppEnv } from '../types/hono.js';
 
 const logger = createLogger('idempotency');
 
+/**
+ * Deterministically sorts object keys recursively to produce identical JSON representations
+ */
 export function canonicalJsonStringify(obj: any): string {
   if (obj === null || typeof obj !== 'object') {
     return JSON.stringify(obj);
   }
 
   if (Array.isArray(obj)) {
-    return `[${obj.map((item) => canonicalJsonStringify(item)).join(',')}]`;
+    return '[' + obj.map(canonicalJsonStringify).join(',') + ']';
   }
 
   const sortedKeys = Object.keys(obj).sort();
-  const pairs = sortedKeys.map((key) => `${JSON.stringify(key)}:${canonicalJsonStringify(obj[key])}`);
-  return `{${pairs.join(',')}}`;
+  const pairs = sortedKeys.map((key) => `"${key}":${canonicalJsonStringify(obj[key])}`);
+  return '{' + pairs.join(',') + '}';
 }
 
+/**
+ * Computes SHA-256 hash of canonical request body
+ */
 export function computeRequestHash(body: any): string {
-  const canonical = canonicalJsonStringify(body || {});
+  const canonical = canonicalJsonStringify(body ?? {});
   return crypto.createHash('sha256').update(canonical).digest('hex');
 }
 
-export const idempotencyGuard = () =>
-  createMiddleware<AppEnv>(async (c, next) => {
-    // Only guard mutating HTTP methods
-    if (!['POST', 'PATCH', 'DELETE'].includes(c.req.method)) {
+/**
+ * Production Web Standards Idempotency Middleware.
+ * Enforces atomic state transitions (processing -> completed) with distributed lock fencing,
+ * deterministic payload comparison, cross-user replay protection, and stream-safe response caching.
+ */
+export function idempotencyGuard() {
+  return createMiddleware<AppEnv>(async (c, next) => {
+    const key = c.req.header('idempotency-key') || c.req.header('x-idempotency-key');
+
+    // If no Idempotency-Key provided on mutating request, pass through
+    if (!key) {
       await next();
       return;
     }
 
-    const key = c.req.header('idempotency-key');
-    if (!key) {
-      throw new AppError({
-        status: 400,
-        code: 'MISSING_IDEMPOTENCY_KEY',
-        message: 'Idempotency-Key header is required for mutating requests.',
-        type: 'https://crux.dev/errors/missing-idempotency-key',
-      });
-    }
-
     const orgId = c.get('orgId') || 'public';
-    const userId = c.get('userId') || c.get('user')?.userId || 'anonymous';
-    const path = c.req.path;
+    const userId = c.get('userId') || null;
+    const endpoint = c.req.path;
 
     // Read request body safely
     let parsedBody: any = {};
@@ -65,31 +68,31 @@ export const idempotencyGuard = () =>
     const now = Date.now();
     const lockedUntil = new Date(now + lockExpiryMs);
 
-    // 1. Attempt atomic insert of new in-flight record
+    // 1. Attempt atomic insert of new in-flight record with schema.sql columns (endpoint, request_hash)
     let rowInserted = false;
     let existingRow: any = null;
 
     try {
       const insertRes = await pool.query(
         `INSERT INTO idempotency_keys (
-           org_id, key, user_id, route, request_hash, status, epoch, locked_until, created_at, updated_at
+           org_id, key, user_id, endpoint, request_hash, status, epoch, locked_until, created_at, updated_at
          ) VALUES ($1, $2, $3, $4, $5, 'processing', 1, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
          ON CONFLICT (org_id, key) DO NOTHING
          RETURNING *`,
-        [orgId, key, userId, path, requestHash, lockedUntil]
+        [orgId, key, userId, endpoint, requestHash, lockedUntil]
       );
 
       if (insertRes.rowCount && insertRes.rowCount > 0) {
         rowInserted = true;
       }
     } catch (insertErr) {
-      logger.warn({ insertErr }, 'Idempotency insert attempt failed, checking conflict');
+      logger.warn({ insertErr }, 'Idempotency insert attempt failed, checking existing lock');
     }
 
     // 2. If row already exists, evaluate state machine
     if (!rowInserted) {
       const selectRes = await pool.query(
-        `SELECT org_id, key, user_id, route, request_hash, status, epoch, locked_until, response_code, response_body
+        `SELECT org_id, key, user_id, endpoint, request_hash, status, epoch, locked_until, response_status, response_body
          FROM idempotency_keys
          WHERE org_id = $1 AND key = $2`,
         [orgId, key]
@@ -105,6 +108,24 @@ export const idempotencyGuard = () =>
 
       existingRow = selectRes.rows[0];
 
+      // Cross-user access isolation guard (B3)
+      if (existingRow.user_id && userId && existingRow.user_id !== userId) {
+        throw new AppError({
+          status: 409,
+          code: 'IDEMPOTENCY_USER_MISMATCH',
+          message: 'Idempotency key was created by a different user.',
+        });
+      }
+
+      // Cross-endpoint access isolation guard (B3)
+      if (existingRow.endpoint !== endpoint) {
+        throw new AppError({
+          status: 409,
+          code: 'IDEMPOTENCY_ENDPOINT_MISMATCH',
+          message: `Idempotency key was created for route '${existingRow.endpoint}', cannot reuse on '${endpoint}'.`,
+        });
+      }
+
       // Mismatched request hash detection
       if (existingRow.request_hash !== requestHash) {
         throw new AppError({
@@ -116,7 +137,7 @@ export const idempotencyGuard = () =>
 
       // Replay completed response
       if (existingRow.status === 'completed') {
-        if (existingRow.response_code === 204) {
+        if (existingRow.response_status === 204) {
           return new Response(null, {
             status: 204,
             headers: { 'Idempotency-Status': 'hit' },
@@ -133,8 +154,8 @@ export const idempotencyGuard = () =>
             body = existingRow.response_body;
           }
         }
-        
-        return c.json(body, existingRow.response_code as any, {
+
+        return c.json(body, existingRow.response_status as any, {
           'Idempotency-Status': 'hit',
         });
       }
@@ -157,11 +178,11 @@ export const idempotencyGuard = () =>
              epoch = $1,
              locked_until = $2,
              user_id = $3,
-             route = $4,
+             endpoint = $4,
              updated_at = CURRENT_TIMESTAMP
          WHERE org_id = $5 AND key = $6 AND epoch = $7
          RETURNING *`,
-        [newEpoch, lockedUntil, userId, path, orgId, key, existingRow.epoch]
+        [newEpoch, lockedUntil, userId, endpoint, orgId, key, existingRow.epoch]
       );
 
       if (updateRes.rowCount === 0) {
@@ -190,7 +211,7 @@ export const idempotencyGuard = () =>
         await pool.query(
           `UPDATE idempotency_keys
            SET status = 'completed',
-               response_code = $1,
+               response_status = $1,
                response_body = $2,
                updated_at = CURRENT_TIMESTAMP
            WHERE org_id = $3 AND key = $4`,
@@ -211,3 +232,4 @@ export const idempotencyGuard = () =>
       throw err;
     }
   });
+}

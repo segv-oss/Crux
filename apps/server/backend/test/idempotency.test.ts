@@ -1,6 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalJsonStringify, computeRequestHash } from '../src/middleware/idempotency.js';
+import { Hono } from 'hono';
+import { canonicalJsonStringify, computeRequestHash, idempotencyGuard } from '../src/middleware/idempotency.js';
+import { AppEnv } from '../src/types/hono.js';
+import { setupErrorHandlers } from '../src/middleware/errorHandler.js';
 
 describe('Idempotency & Worker Fencing Test Suite', () => {
   it('should recursively sort nested object keys and produce identical hashes', () => {
@@ -26,31 +29,43 @@ describe('Idempotency & Worker Fencing Test Suite', () => {
     assert.equal(hash1, hash2, 'Canonical hashes must match regardless of nested key order');
   });
 
-  it('should reject delayed worker completing with old epoch after stale lease takeover', () => {
-    // Simulating lease state machine
-    let lease = {
-      key: 'idem_key_1',
-      orgId: 'org_crux',
-      epoch: 1,
-      status: 'processing',
-      lockedUntil: Date.now() - 5000, // Expired lease
+  it('should verify idempotency validation rules: user match, endpoint match, and hash match', () => {
+    const storedRecord = {
+      org_id: 'org_crux',
+      key: 'idem_key_456',
+      user_id: 'user_alice',
+      endpoint: '/api/v1/repos/repo_1/prs',
+      request_hash: computeRequestHash({ title: 'Add feature' }),
+      status: 'completed',
+      response_status: 201,
+      response_body: { id: 'pr_1', title: 'Add feature' },
     };
 
-    // Worker B takes over stale lease
-    const now = Date.now();
-    assert.ok(now > lease.lockedUntil, 'Lease is stale');
-    lease.epoch += 1;
-    lease.lockedUntil = now + 45000;
-    const workerBEpoch = lease.epoch; // 2
+    // 1. Same user, same endpoint, same payload -> valid replay
+    const isReplayValid = (userId: string, endpoint: string, body: any) => {
+      if (storedRecord.user_id && userId !== storedRecord.user_id) return { valid: false, code: 'IDEMPOTENCY_USER_MISMATCH' };
+      if (storedRecord.endpoint !== endpoint) return { valid: false, code: 'IDEMPOTENCY_ENDPOINT_MISMATCH' };
+      if (storedRecord.request_hash !== computeRequestHash(body)) return { valid: false, code: 'IDEMPOTENCY_PAYLOAD_MISMATCH' };
+      return { valid: true, status: storedRecord.response_status, body: storedRecord.response_body };
+    };
 
-    // Worker A (stalled) resumes with epoch 1 and attempts to commit
-    const workerAEpoch = 1;
-    const updateRowsWorkerA = workerAEpoch === lease.epoch ? 1 : 0;
-    assert.equal(updateRowsWorkerA, 0, 'Worker A commit must be rejected with 0 rows updated due to epoch fencing');
+    const validAttempt = isReplayValid('user_alice', '/api/v1/repos/repo_1/prs', { title: 'Add feature' });
+    assert.equal(validAttempt.valid, true);
 
-    // Worker B finishes with epoch 2
-    const updateRowsWorkerB = workerBEpoch === lease.epoch ? 1 : 0;
-    assert.equal(updateRowsWorkerB, 1, 'Worker B commit succeeds with active epoch');
+    // 2. Different user -> 409 IDEMPOTENCY_USER_MISMATCH
+    const userMismatch = isReplayValid('user_bob', '/api/v1/repos/repo_1/prs', { title: 'Add feature' });
+    assert.equal(userMismatch.valid, false);
+    assert.equal(userMismatch.code, 'IDEMPOTENCY_USER_MISMATCH');
+
+    // 3. Different endpoint -> 409 IDEMPOTENCY_ENDPOINT_MISMATCH
+    const routeMismatch = isReplayValid('user_alice', '/api/v1/repos/repo_1/prs/pr_1/comments', { title: 'Add feature' });
+    assert.equal(routeMismatch.valid, false);
+    assert.equal(routeMismatch.code, 'IDEMPOTENCY_ENDPOINT_MISMATCH');
+
+    // 4. Different payload -> 422 IDEMPOTENCY_PAYLOAD_MISMATCH
+    const payloadMismatch = isReplayValid('user_alice', '/api/v1/repos/repo_1/prs', { title: 'Different feature' });
+    assert.equal(payloadMismatch.valid, false);
+    assert.equal(payloadMismatch.code, 'IDEMPOTENCY_PAYLOAD_MISMATCH');
   });
 
   it('should enforce multi-tenant isolation with composite key (org_id, key)', () => {

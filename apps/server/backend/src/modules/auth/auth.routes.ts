@@ -16,5 +16,6 @@ authRouter.get(
   validate('query', githubCallbackQuerySchema),
   authController.handleGitHubCallback
 );
+authRouter.post('/refresh', authController.refreshAccessToken);
 authRouter.get('/me', authenticate, authController.getCurrentUser);
 authRouter.post('/logout', authenticate, authController.logout);

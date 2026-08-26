@@ -101,6 +101,8 @@ export async function submitReview(
                ELSE 'pending'
              END
            ),
+           sequence_number = sequence_number + 1,
+           version = version + 1,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1`,
       [prId]
@@ -226,6 +228,8 @@ export async function dismissReview(
                ELSE 'pending'
              END
            ),
+           sequence_number = sequence_number + 1,
+           version = version + 1,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1`,
       [prId]

@@ -222,6 +222,79 @@ export async function getUserProfile(userId: string) {
   };
 }
 
+export async function refreshAccessToken(refreshToken: string) {
+  if (!refreshToken) {
+    throw new AppError({
+      status: 401,
+      code: 'UNAUTHORIZED',
+      message: 'Refresh token is required.',
+    });
+  }
+
+  let sessionData: { userId: string } | null = null;
+  try {
+    const raw = await redisClient.get(`auth:refresh:${refreshToken}`);
+    if (raw) {
+      sessionData = JSON.parse(raw);
+    }
+  } catch (err) {
+    logger.warn({ err }, 'Redis error reading refresh token');
+  }
+
+  if (!sessionData || !sessionData.userId) {
+    throw new AppError({
+      status: 401,
+      code: 'INVALID_REFRESH_TOKEN',
+      message: 'Refresh token is invalid or has expired.',
+    });
+  }
+
+  const userRes = await pool.query(
+    `SELECT id, email, name, avatar_url FROM users WHERE id = $1 AND deleted_at IS NULL`,
+    [sessionData.userId]
+  );
+
+  if (userRes.rowCount === 0) {
+    throw new AppError({
+      status: 401,
+      code: 'USER_NOT_FOUND',
+      message: 'User belonging to refresh token not found.',
+    });
+  }
+
+  const user = userRes.rows[0];
+  const jwtPayload: JwtPayload = {
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    avatarUrl: user.avatar_url,
+  };
+
+  const newAccessToken = signToken(jwtPayload, String(config.JWT_EXPIRES_IN));
+  const newRefreshToken = `rf_${crypto.randomUUID()}`;
+
+  // Rotate refresh token atomically in Redis
+  try {
+    const ttlSeconds = 86400 * 30; // 30 days
+    const pipeline = redisClient.pipeline();
+    pipeline.del(`auth:refresh:${refreshToken}`);
+    pipeline.srem(`user:refresh:${user.id}`, refreshToken);
+    pipeline.set(`auth:refresh:${newRefreshToken}`, JSON.stringify({ userId: user.id }), 'EX', ttlSeconds);
+    pipeline.sadd(`user:refresh:${user.id}`, newRefreshToken);
+    pipeline.expire(`user:refresh:${user.id}`, ttlSeconds);
+    await pipeline.exec();
+  } catch (redisErr) {
+    logger.warn({ redisErr }, 'Failed to rotate refresh token in Redis');
+  }
+
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    expiresIn: config.JWT_EXPIRES_IN,
+    user: jwtPayload,
+  };
+}
+
 export async function revokeSession(userId: string): Promise<void> {
   try {
     const tokens = await redisClient.smembers(`user:refresh:${userId}`);
